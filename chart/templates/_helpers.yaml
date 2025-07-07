@@ -91,12 +91,19 @@ If release name contains chart name it will be used as a full name.
         name: {{ template "airflow_metadata_secret" . }}
         key: kedaConnection
   {{- end }}
-  {{- if .Values.enableBuiltInSecretEnvVars.AIRFLOW__WEBSERVER__SECRET_KEY }}
+  {{- if and (semverCompare "<3.0.0" .Values.airflowVersion) .Values.enableBuiltInSecretEnvVars.AIRFLOW__WEBSERVER__SECRET_KEY }}
   - name: AIRFLOW__WEBSERVER__SECRET_KEY
     valueFrom:
       secretKeyRef:
         name: {{ template "webserver_secret_key_secret" . }}
         key: webserver-secret-key
+  {{- end }}
+  {{- if and (semverCompare ">=3.0.0" .Values.airflowVersion) .Values.enableBuiltInSecretEnvVars.AIRFLOW__API__SECRET_KEY }}
+  - name: AIRFLOW__API__SECRET_KEY
+    valueFrom:
+      secretKeyRef:
+        name: {{ template "api_secret_key_secret" . }}
+        key: api-secret-key
   {{- end }}
   {{- if and (semverCompare ">=3.0.0" .Values.airflowVersion) .Values.enableBuiltInSecretEnvVars.AIRFLOW__API_AUTH__JWT_SECRET }}
   - name: AIRFLOW__API_AUTH__JWT_SECRET
@@ -216,6 +223,14 @@ If release name contains chart name it will be used as a full name.
     defaultMode: 288
 {{- end }}
 
+{{/*  Git GitHub App secret volume */}}
+{{- define "git_sync_github_app_secret_volume" }}
+- name: github-app-secret
+  secret:
+    secretName: {{ template "git_sync_github_app_secret" . }}
+    defaultMode: 288
+{{- end }}
+
 {{/*  Git sync container */}}
 {{- define "git_sync_container" }}
 - name: {{ .Values.dags.gitSync.containerName }}{{ if .is_init }}-init{{ end }}
@@ -269,6 +284,25 @@ If release name contains chart name it will be used as a full name.
         secretKeyRef:
           name: {{ .Values.dags.gitSync.credentialsSecret | quote }}
           key: GITSYNC_PASSWORD
+    {{ else if .Values.dags.gitSync.githubAppSecret }}
+    - name: GITSYNC_GITHUB_APP_PRIVATE_KEY_FILE
+      value: "/etc/git-secret/github-app"
+    {{- if .Values.dags.gitSync.githubAppId }}
+    - name: GITSYNC_GITHUB_APP_APPLICATION_ID
+      value: {{ .Values.dags.gitSync.githubAppId | quote }}
+    {{- end }}
+    {{- if .Values.dags.gitSync.githubAppClientId }}
+    - name: GITSYNC_GITHUB_APP_CLIENT_ID
+      value: {{ .Values.dags.gitSync.githubAppClientId | quote }}
+    {{- end }}
+    {{- if .Values.dags.gitSync.githubAppInstallationId }}
+    - name: GITSYNC_GITHUB_APP_INSTALLATION_ID
+      value: {{ .Values.dags.gitSync.githubAppInstallationId | quote }}
+    {{- end }}
+    {{- if .Values.dags.gitSync.githubAppBaseUrl }}
+    - name: GITSYNC_GITHUB_APP_BASE_URL
+      value: {{ .Values.dags.gitSync.githubAppBaseUrl | quote }}
+    {{- end }}
     {{- end }}
     - name: GIT_SYNC_REV
       value: {{ .Values.dags.gitSync.rev | quote }}
@@ -330,6 +364,12 @@ If release name contains chart name it will be used as a full name.
     readOnly: true
     subPath: known_hosts
   {{- end }}
+  {{- end }}
+  {{- if .Values.dags.gitSync.githubAppSecret }}
+  - name: github-app-secret
+    mountPath: /etc/git-secret/github-app
+    readOnly: true
+    subPath: githubAppPrivateKey
   {{- end }}
   {{- if .Values.dags.gitSync.extraVolumeMounts }}
     {{- tpl (toYaml .Values.dags.gitSync.extraVolumeMounts) . | nindent 2 }}
@@ -411,6 +451,10 @@ If release name contains chart name it will be used as a full name.
   {{- default (printf "%s-webserver-secret-key" (include "airflow.fullname" .)) .Values.webserverSecretKeySecretName }}
 {{- end }}
 
+{{- define "api_secret_key_secret" -}}
+  {{- default (printf "%s-api-secret-key" (include "airflow.fullname" .)) .Values.apiSecretKeySecretName }}
+{{- end }}
+
 {{- define "redis_password_secret" -}}
   {{- default (printf "%s-redis-password" .Release.Name) .Values.redis.passwordSecretName }}
 {{- end }}
@@ -466,6 +510,11 @@ If release name contains chart name it will be used as a full name.
 {{/* Create the name of the git sync ssh secret to use */}}
 {{- define "git_sync_ssh_key" -}}
   {{- default (printf "%s-ssh-secret" (include "airflow.fullname" .)) .Values.dags.gitSync.sshKeySecret }}
+{{- end }}
+
+{{/* Create the name of the git sync GitHub App secret to use */}}
+{{- define "git_sync_github_app_secret" -}}
+  {{- default (printf "%s-github-app-secret" (include "airflow.fullname" .)) .Values.dags.gitSync.githubAppSecret }}
 {{- end }}
 
 {{- define "celery_executor_namespace" -}}

@@ -407,6 +407,7 @@ enableBuiltInSecretEnvVars:
   AIRFLOW__CORE__SQL_ALCHEMY_CONN: true
   AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: true
   AIRFLOW_CONN_AIRFLOW_DB: true
+  AIRFLOW__API__SECRET_KEY: true
   AIRFLOW__API_AUTH__JWT_SECRET: true
   AIRFLOW__WEBSERVER__SECRET_KEY: true
   AIRFLOW__CELERY__CELERY_RESULT_BACKEND: true
@@ -551,17 +552,23 @@ fernetKeySecretName: ~
 # Add custom annotations to the fernet key secret
 fernetKeySecretAnnotations: {}
 
-# Flask secret key for Airflow Webserver: `[webserver] secret_key` in airflow.cfg
-webserverSecretKey: ~
-# Add custom annotations to the webserver secret
-webserverSecretAnnotations: {}
-webserverSecretKeySecretName: ~
+# Flask secret key for Airflow 3+ Api: `[api] secret_key` in airflow.cfg
+apiSecretKey: ~
+# Add custom annotations to the api secret
+apiSecretAnnotations: {}
+apiSecretKeySecretName: ~
 
 # Secret key used to encode and decode JWTs: `[api_auth] jwt_secret` in airflow.cfg
 jwtSecret: ~
 # Add custom annotations to the JWT secret
 jwtSecretAnnotations: {}
 jwtSecretName: ~
+
+# Flask secret key for Airflow <3 Webserver: `[webserver] secret_key` in airflow.cfg
+webserverSecretKey: ~
+# Add custom annotations to the webserver secret
+webserverSecretAnnotations: {}
+webserverSecretKeySecretName: ~
 
 # In order to use kerberos you need to create secret containing the keytab file
 # The secret name should follow naming convention of the application where resources are
@@ -3007,6 +3014,29 @@ dags:
     # knownHosts: |
     #    <host1>,<ip1> <key1>
     #    <host2>,<ip2> <key2>
+
+    # GitHub App authentication (requires git-sync v4.3.0+)
+    #   ---
+    #   apiVersion: v1
+    #   kind: Secret
+    #   metadata:
+    #     name: github-app-secret
+    #   type: Opaque
+    #   data:
+    #     githubAppPrivateKey: <base64_encoded_private_key>
+    #
+    # Configure the values below
+    # githubAppSecret: github-app-secret
+    # githubAppId: 123456 
+    # githubAppInstallationId: 789012
+    # githubAppBaseUrl: https://api.github.com/  # Optional
+    #
+    # githubAppClientId: 654321 # Either use this or githubAppId (not both)
+    githubAppSecret: ~
+    githubAppId: ~
+    githubAppClientId: ~
+    githubAppInstallationId: ~
+    githubAppBaseUrl: ~
 
     # interval between git sync attempts in seconds
     # high values are more likely to cause DAGs to become out of sync between different components

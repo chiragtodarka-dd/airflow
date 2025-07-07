@@ -1064,6 +1064,11 @@
                     "type": "boolean",
                     "default": true
                 },
+                "AIRFLOW__API__SECRET_KEY": {
+                    "description": "Enable ``AIRFLOW__API__SECRET_KEY`` variable to be read from the Api Secret Key Secret",
+                    "type": "boolean",
+                    "default": true
+                },
                 "AIRFLOW__API_AUTH__JWT_SECRET": {
                     "description": "Enable ``AIRFLOW__API_AUTH__JWT_SECRET`` variable to be read from the JWT Secret",
                     "type": "boolean",
@@ -1463,6 +1468,33 @@
             "additionalProperties": {
                 "type": "string"
             }
+        },
+        "apiSecretKey": {
+            "description": "The Flask secret key for Airflow Api to encrypt browser session.",
+            "type": [
+                "string",
+                "null"
+            ],
+            "x-docsSection": "Common",
+            "default": null
+        },
+        "apiSecretAnnotations": {
+            "description": "Annotations to add to the Api secret.",
+            "type": "object",
+            "x-docsSection": "Common",
+            "default": {},
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
+        "apiSecretKeySecretName": {
+            "description": "The Secret name containing Flask secret_key for the Api.",
+            "type": [
+                "string",
+                "null"
+            ],
+            "x-docsSection": "Airflow",
+            "default": null
         },
         "jwtSecret": {
             "description": "Secret key used to encode and decode JWTs to authenticate to public and private APIs (can only be set during install, not upgrade).",
@@ -9103,6 +9135,46 @@
                                 "<host1>,<ip1> <key1>\n<host2>,<ip2> <key2>",
                                 "<host1>,<ip1> <key1>"
                             ]
+                        },
+                        "githubAppSecret": {
+                            "description": "Name of a Secret containing the GitHub App private key for authentication.",
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "default": null
+                        },
+                        "githubAppId": {
+                            "description": "The application ID of the GitHub App used for authentication.",
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "default": null
+                        },
+                        "githubAppClientId": {
+                            "description": "The client ID of the GitHub App used for authentication (alternative to githubAppId).",
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "default": null
+                        },
+                        "githubAppInstallationId": {
+                            "description": "The installation ID of the GitHub App used for authentication.",
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "default": null
+                        },
+                        "githubAppBaseUrl": {
+                            "description": "The GitHub base URL for GitHub App authentication requests (defaults to https://api.github.com/).",
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "default": null
                         },
                         "env": {
                             "description": "Environment variables for git sync container.",
